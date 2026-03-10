@@ -1,6 +1,7 @@
 import pandas as pd
 import re
 import nltk
+import seaborn as sns
 nltk.download("stopwords")
 from nltk.corpus import stopwords
 stop_words = set(stopwords.words("english"))
@@ -10,6 +11,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import classification_report
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+
 
 def cargar_datos(file_path):
     df = pd.read_csv(file_path)
@@ -19,6 +23,7 @@ def cargar_datos(file_path):
 def EDA(df):
     print(df.head())
     print(df["sentiment"].value_counts())
+
     print(df["review"].iloc[0])
 
 def limpiar_texto(texto):
@@ -57,7 +62,17 @@ def entrenar_modelo(X_train, y_train):
 
 def evaluar_modelo(modelo, X_test, y_test):
     y_pred = modelo.predict(X_test)
-    ConfusionMatrixDisplay.from_predictions(y_test, y_pred)
+    disp = ConfusionMatrixDisplay.from_predictions(
+        y_test, 
+        y_pred, 
+        display_labels=['Negativo', 'Positivo'],
+        cmap=plt.cm.Blues
+    )
+    plt.title('Matriz de Confusión', fontsize=14, color="#AD1457")
+    plt.xlabel('Etiqueta Predicha', color="#AD1457")
+    plt.ylabel('Etiqueta Real', color="#AD1457")
+    
+    plt.show()
     print(classification_report(y_test, y_pred))
 
 
