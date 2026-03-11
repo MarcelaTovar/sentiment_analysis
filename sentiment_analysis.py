@@ -2,9 +2,7 @@ import pandas as pd
 import re
 import nltk
 import seaborn as sns
-nltk.download("stopwords")
 from nltk.corpus import stopwords
-stop_words = set(stopwords.words("english"))
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
@@ -12,8 +10,10 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import classification_report
 import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix
+from sklearn.pipeline import Pipeline
 
+nltk.download("stopwords")
+stop_words = set(stopwords.words("english"))
 
 def cargar_datos(file_path):
     df = pd.read_csv(file_path)
@@ -21,10 +21,17 @@ def cargar_datos(file_path):
 
 
 def EDA(df):
+    rosa_principal = "#FF85A2" 
     print(df.head())
     print(df["sentiment"].value_counts())
-
     print(df["review"].iloc[0])
+    plt.figure(figsize=(8, 5))
+    sns.countplot(x=df["sentiment"], color=rosa_principal, edgecolor="black") 
+    plt.title("Distribución de Sentimiento",fontsize=14, color="#AD1457")
+    plt.xlabel("Clases")
+    plt.ylabel("Número de muestras")
+    sns.despine()
+    plt.show()
 
 def limpiar_texto(texto):
     texto = texto.lower()
@@ -47,7 +54,7 @@ def vectorizar_texto(df):
     vectorizador = CountVectorizer(max_features=3000)
     X = vectorizador.fit_transform(df["review_limpia"])
     y = df["sentiment"]
-    return X, y
+    return X, y, vectorizador
 
 def division_de_datos(X,y):
     X_train, X_test, y_train, y_test = train_test_split(
@@ -75,15 +82,31 @@ def evaluar_modelo(modelo, X_test, y_test):
     plt.show()
     print(classification_report(y_test, y_pred))
 
+def prueba(modelo, vectorizador, texto):
+    texto_limpio = limpiar_texto(texto)
+    texto_vectorizado = vectorizador.transform([texto_limpio])
+    prediccion = modelo.predict(texto_vectorizado)
+    return prediccion[0]
 
 def main():
     df = cargar_datos('./IMDB Dataset.csv')
     EDA(df)
     df = preprocesar(df)
-    X, y = vectorizar_texto(df)
+    X, y, mi_vectorizador = vectorizar_texto(df) 
     X_train, X_test, y_train, y_test = division_de_datos(X, y)
     modelo = entrenar_modelo(X_train, y_train)
     evaluar_modelo(modelo, X_test, y_test)
+    prueba_texto = "This movie was fantastic! I loved it."
+    nuevo_limpio = limpiar_texto(prueba_texto) 
+    vector = mi_vectorizador.transform([nuevo_limpio]) 
+    resultado = modelo.predict(vector)
+    print(f"Resultado: {resultado[0]}")
+    prueba_texto_negativo = "This movie was terrible. I hated it."
+    nuevo_limpio_negativo = limpiar_texto(prueba_texto_negativo)
+    vector_negativo = mi_vectorizador.transform([nuevo_limpio_negativo])
+    resultado_negativo = modelo.predict(vector_negativo)
+    print(f"Resultado: {resultado_negativo[0]}")
+
 
 
 
